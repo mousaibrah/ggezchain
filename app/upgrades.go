@@ -7,6 +7,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/module"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 	V2 "github.com/mousaibrah/ggezchain/app/upgrades/v2"
+	V3 "github.com/mousaibrah/ggezchain/app/upgrades/v3"
 )
 
 func (app *App) setupUpgradeHandlers(configurator module.Configurator) {
@@ -15,7 +16,11 @@ func (app *App) setupUpgradeHandlers(configurator module.Configurator) {
 		V2.UpgradeName,
 		V2.CreateUpgradeHandler(app.mm, app.configurator),
 	)
-
+	// set v3
+	app.UpgradeKeeper.SetUpgradeHandler(
+		V3.UpgradeName,
+		app.CreateUpgradeHandler(app.mm, app.configurator),
+	)
 
 	// When a planned update height is reached, the old binary will panic
 	// writing on disk the height and name of the update that triggered it
