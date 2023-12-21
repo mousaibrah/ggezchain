@@ -1,0 +1,71 @@
+syntax = "proto3";
+
+package ggezchain.denomfactory;
+
+import "gogoproto/gogo.proto";
+import "google/api/annotations.proto";
+import "cosmos/base/query/v1beta1/pagination.proto";
+import "ggezchain/denomfactory/params.proto";
+import "ggezchain/denomfactory/denom_index.proto";
+import "ggezchain/denomfactory/new_coin.proto";
+
+option go_package = "github.com/mousaibrah/ggezchain/x/denomfactory/types";
+
+// Query defines the gRPC querier service.
+service Query {
+  
+  // Parameters queries the parameters of the module.
+  rpc Params (QueryParamsRequest) returns (QueryParamsResponse) {
+    option (google.api.http).get = "/mousaibrah/ggezchain/denomfactory/params";
+  
+  }
+  
+  // Queries a DenomIndex by index.
+  rpc DenomIndex (QueryGetDenomIndexRequest) returns (QueryGetDenomIndexResponse) {
+    option (google.api.http).get = "/mousaibrah/ggezchain/denomfactory/denom_index";
+  
+  }
+  
+  // Queries a list of NewCoin items.
+  rpc NewCoin    (QueryGetNewCoinRequest) returns (QueryGetNewCoinResponse) {
+    option (google.api.http).get = "/mousaibrah/ggezchain/denomfactory/new_coin/{denomIndex}";
+  
+  }
+  rpc NewCoinAll (QueryAllNewCoinRequest) returns (QueryAllNewCoinResponse) {
+    option (google.api.http).get = "/mousaibrah/ggezchain/denomfactory/new_coin";
+  
+  }
+}
+// QueryParamsRequest is request type for the Query/Params RPC method.
+message QueryParamsRequest {}
+
+// QueryParamsResponse is response type for the Query/Params RPC method.
+message QueryParamsResponse {
+  
+  // params holds all the parameters of this module.
+  Params params = 1 [(gogoproto.nullable) = false];
+}
+
+message QueryGetDenomIndexRequest {}
+
+message QueryGetDenomIndexResponse {
+  DenomIndex DenomIndex = 1 [(gogoproto.nullable) = false];
+}
+
+message QueryGetNewCoinRequest {
+  string denomIndex = 1;
+}
+
+message QueryGetNewCoinResponse {
+  NewCoin newCoin = 1 [(gogoproto.nullable) = false];
+}
+
+message QueryAllNewCoinRequest {
+  cosmos.base.query.v1beta1.PageRequest pagination = 1;
+}
+
+message QueryAllNewCoinResponse {
+  repeated NewCoin                                newCoin    = 1 [(gogoproto.nullable) = false];
+           cosmos.base.query.v1beta1.PageResponse pagination = 2;
+}
+

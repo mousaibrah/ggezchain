@@ -114,6 +114,10 @@ import (
 	trademodulekeeper "github.com/mousaibrah/ggezchain/x/trade/keeper"
 	trademoduletypes "github.com/mousaibrah/ggezchain/x/trade/types"
 
+	denomfactorymodule "github.com/mousaibrah/ggezchain/x/denomfactory"
+	denomfactorymodulekeeper "github.com/mousaibrah/ggezchain/x/denomfactory/keeper"
+	denomfactorymoduletypes "github.com/mousaibrah/ggezchain/x/denomfactory/types"
+
 	// this line is used by starport scaffolding # stargate/app/moduleImport
 
 	appparams "github.com/mousaibrah/ggezchain/app/params"
@@ -175,20 +179,22 @@ var (
 		vesting.AppModuleBasic{},
 		consensus.AppModuleBasic{},
 		trademodule.AppModuleBasic{},
+		denomfactorymodule.AppModuleBasic{},
 		// this line is used by starport scaffolding # stargate/app/moduleBasic
 	)
 
 	// module account permissions
 	maccPerms = map[string][]string{
-		authtypes.FeeCollectorName:     nil,
-		distrtypes.ModuleName:          nil,
-		icatypes.ModuleName:            nil,
-		minttypes.ModuleName:           {authtypes.Minter},
-		stakingtypes.BondedPoolName:    {authtypes.Burner, authtypes.Staking},
-		stakingtypes.NotBondedPoolName: {authtypes.Burner, authtypes.Staking},
-		govtypes.ModuleName:            {authtypes.Burner},
-		ibctransfertypes.ModuleName:    {authtypes.Minter, authtypes.Burner},
-		trademoduletypes.ModuleName:    {authtypes.Minter, authtypes.Burner, authtypes.Staking},
+		authtypes.FeeCollectorName:         nil,
+		distrtypes.ModuleName:              nil,
+		icatypes.ModuleName:                nil,
+		minttypes.ModuleName:               {authtypes.Minter},
+		stakingtypes.BondedPoolName:        {authtypes.Burner, authtypes.Staking},
+		stakingtypes.NotBondedPoolName:     {authtypes.Burner, authtypes.Staking},
+		govtypes.ModuleName:                {authtypes.Burner},
+		ibctransfertypes.ModuleName:        {authtypes.Minter, authtypes.Burner},
+		trademoduletypes.ModuleName:        {authtypes.Minter, authtypes.Burner, authtypes.Staking},
+		denomfactorymoduletypes.ModuleName: {authtypes.Minter, authtypes.Burner, authtypes.Staking},
 		// this line is used by starport scaffolding # stargate/app/maccPerms
 	}
 )
@@ -252,6 +258,8 @@ type App struct {
 	ScopedICAHostKeeper  capabilitykeeper.ScopedKeeper
 
 	TradeKeeper trademodulekeeper.Keeper
+
+	DenomfactoryKeeper denomfactorymodulekeeper.Keeper
 	// this line is used by starport scaffolding # stargate/app/keeperDeclaration
 
 	// mm is the module manager
@@ -299,6 +307,7 @@ func New(
 		feegrant.StoreKey, evidencetypes.StoreKey, ibctransfertypes.StoreKey, icahosttypes.StoreKey,
 		capabilitytypes.StoreKey, group.StoreKey, icacontrollertypes.StoreKey, consensusparamtypes.StoreKey,
 		trademoduletypes.StoreKey,
+		denomfactorymoduletypes.StoreKey,
 		// this line is used by starport scaffolding # stargate/app/storeKey
 	)
 	tkeys := sdk.NewTransientStoreKeys(paramstypes.TStoreKey)
@@ -533,6 +542,17 @@ func New(
 	)
 	tradeModule := trademodule.NewAppModule(appCodec, app.TradeKeeper, app.AccountKeeper, app.BankKeeper)
 
+	app.DenomfactoryKeeper = *denomfactorymodulekeeper.NewKeeper(
+		app.BankKeeper,
+		appCodec,
+		keys[denomfactorymoduletypes.StoreKey],
+		keys[denomfactorymoduletypes.MemStoreKey],
+		app.GetSubspace(denomfactorymoduletypes.ModuleName),
+
+		app.BankKeeper,
+	)
+	denomfactoryModule := denomfactorymodule.NewAppModule(appCodec, app.DenomfactoryKeeper, app.AccountKeeper, app.BankKeeper)
+
 	// this line is used by starport scaffolding # stargate/app/keeperDefinition
 
 	/**** IBC Routing ****/
@@ -595,6 +615,7 @@ func New(
 		transferModule,
 		icaModule,
 		tradeModule,
+		denomfactoryModule,
 		// this line is used by starport scaffolding # stargate/app/appModule
 
 		crisis.NewAppModule(app.CrisisKeeper, skipGenesisInvariants, app.GetSubspace(crisistypes.ModuleName)), // always be last to make sure that it checks for all invariants and not only part of them
@@ -628,6 +649,7 @@ func New(
 		vestingtypes.ModuleName,
 		consensusparamtypes.ModuleName,
 		trademoduletypes.ModuleName,
+		denomfactorymoduletypes.ModuleName,
 		// this line is used by starport scaffolding # stargate/app/beginBlockers
 	)
 
@@ -654,6 +676,7 @@ func New(
 		vestingtypes.ModuleName,
 		consensusparamtypes.ModuleName,
 		trademoduletypes.ModuleName,
+		denomfactorymoduletypes.ModuleName,
 		// this line is used by starport scaffolding # stargate/app/endBlockers
 	)
 
@@ -685,6 +708,7 @@ func New(
 		vestingtypes.ModuleName,
 		consensusparamtypes.ModuleName,
 		trademoduletypes.ModuleName,
+		denomfactorymoduletypes.ModuleName,
 		// this line is used by starport scaffolding # stargate/app/initGenesis
 	}
 	app.mm.SetOrderInitGenesis(genesisModuleOrder...)
@@ -740,7 +764,6 @@ func New(
 			tmos.Exit(err.Error())
 		}
 	}
-
 	app.ScopedIBCKeeper = scopedIBCKeeper
 	app.ScopedTransferKeeper = scopedTransferKeeper
 	// this line is used by starport scaffolding # stargate/app/beforeInitReturn
@@ -764,6 +787,7 @@ func (app *App) EndBlocker(ctx sdk.Context, req abci.RequestEndBlock) abci.Respo
 // InitChainer application update at chain initialization
 func (app *App) InitChainer(ctx sdk.Context, req abci.RequestInitChain) abci.ResponseInitChain {
 	var genesisState GenesisState
+	// app.MetaData(ctx)
 	if err := json.Unmarshal(req.AppStateBytes, &genesisState); err != nil {
 		panic(err)
 	}
@@ -912,6 +936,7 @@ func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino
 	paramsKeeper.Subspace(icacontrollertypes.SubModuleName)
 	paramsKeeper.Subspace(icahosttypes.SubModuleName)
 	paramsKeeper.Subspace(trademoduletypes.ModuleName)
+	paramsKeeper.Subspace(denomfactorymoduletypes.ModuleName)
 	// this line is used by starport scaffolding # stargate/app/paramSubspace
 
 	return paramsKeeper

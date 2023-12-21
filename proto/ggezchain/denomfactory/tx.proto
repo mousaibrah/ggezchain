@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+package ggezchain.denomfactory;
+
+option go_package = "github.com/mousaibrah/ggezchain/x/denomfactory/types";
+
+// Msg defines the Msg service.
+service Msg {
+  rpc MintNewCoin (MsgMintNewCoin) returns (MsgMintNewCoinResponse);
+}
+message MsgMintNewCoin {
+  string creator         = 1;
+  string coin            = 2;
+  string amount          = 3;
+  string receiverAddress = 4;
+}
+
+message MsgMintNewCoinResponse {
+  string denomIndex = 1;
+}
+

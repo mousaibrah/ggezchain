@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+package ggezchain.denomfactory;
+
+import "gogoproto/gogo.proto";
+import "ggezchain/denomfactory/params.proto";
+import "ggezchain/denomfactory/denom_index.proto";
+import "ggezchain/denomfactory/new_coin.proto";
+
+option go_package = "github.com/mousaibrah/ggezchain/x/denomfactory/types";
+
+// GenesisState defines the denomfactory module's genesis state.
+message GenesisState {
+           Params     params      = 1 [(gogoproto.nullable) = false];
+           DenomIndex denomIndex  = 2 [(gogoproto.nullable) = false];
+  repeated NewCoin    newCoinList = 3 [(gogoproto.nullable) = false];
+}
+

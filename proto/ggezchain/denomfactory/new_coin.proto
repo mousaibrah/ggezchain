@@ -1,0 +1,12 @@
+syntax = "proto3";
+package ggezchain.denomfactory;
+
+option go_package = "github.com/mousaibrah/ggezchain/x/denomfactory/types";
+
+message NewCoin {
+  string denomIndex = 1; 
+  string receiverAddress = 2; 
+  string amount = 3; 
+  
+}
+
